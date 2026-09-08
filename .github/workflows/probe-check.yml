@@ -6,7 +6,6 @@ name: probe-check
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, edited]
-    branches: [main]
 
 permissions:
   contents: read
