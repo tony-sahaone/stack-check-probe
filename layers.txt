@@ -9,3 +9,6 @@ eight
 layer 1 of the fanout stack
 layer 2 of the fanout stack
 layer 3 of the fanout stack
+race layer 1
+race layer 2
+race layer 3
