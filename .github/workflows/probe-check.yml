@@ -1,6 +1,6 @@
-# Mirrors the approval guard-s trigger shape exactly: pull_request_target,
-# scoped to main, context taken from the job name. The body is trivial on
-# purpose -- what is under test is which pull requests get a run at all.
+# Mirrors the approval guard-s trigger shape: pull_request_target, scoped to
+# main, context taken from the job name. The body only reports the payload --
+# what is under test is which pull requests get a run at all.
 name: probe-check
 
 on:
@@ -16,4 +16,12 @@ jobs:
     name: probe-check
     runs-on: ubuntu-latest
     steps:
-      - run: echo "reporting probe-check for PR #${{ github.event.pull_request.number }} base=${{ github.event.pull_request.base.ref }}"
+      - name: Report the event payload
+        run: |
+          echo "PR=${{ github.event.pull_request.number }}"
+          echo "base=${{ github.event.pull_request.base.ref }}"
+          echo "head=${{ github.event.pull_request.head.ref }}"
+          echo "head_sha=${{ github.event.pull_request.head.sha }}"
+          echo "github_ref=${{ github.ref }}"
+          echo "github_sha=${{ github.sha }}"
+          echo "action=${{ github.event.action }}"
