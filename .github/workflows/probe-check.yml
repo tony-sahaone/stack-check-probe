@@ -1,26 +1,49 @@
-# Mirrors the approval guard-s trigger shape: pull_request_target, scoped to
-# main, context taken from the job name. The body only reports the payload --
-# what is under test is which pull requests get a run at all.
+# Option 2: one trusted run reports for the whole stack.
+#
+# The trigger stays scoped to main, so this always runs main-s own copy of the
+# workflow -- the property that stops a pull request from editing the guard to
+# neuter itself. The bottom layer of a stack is the only one based on main, so
+# it is the only one that runs. It then walks the stack upward by base refs and
+# posts the same context onto each layer-s head with the Checks API.
 name: probe-check
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, edited]
+    branches: [main]
 
 permissions:
   contents: read
+  pull-requests: read
+  checks: write
 
 jobs:
   guard:
     name: probe-check
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
     steps:
-      - name: Report the event payload
+      - name: Report for this pull request and every layer above it
         run: |
-          echo "PR=${{ github.event.pull_request.number }}"
-          echo "base=${{ github.event.pull_request.base.ref }}"
-          echo "head=${{ github.event.pull_request.head.ref }}"
-          echo "head_sha=${{ github.event.pull_request.head.sha }}"
-          echo "github_ref=${{ github.ref }}"
-          echo "github_sha=${{ github.sha }}"
-          echo "action=${{ github.event.action }}"
+          set -euo pipefail
+          echo "bottom PR=${{ github.event.pull_request.number }} base=${{ github.event.pull_request.base.ref }}"
+          head="${{ github.event.pull_request.head.ref }}"
+          hops=0
+          while [ "$hops" -lt 20 ]; do
+            row="$(gh pr list --repo "$REPO" --state open --base "$head" \
+                     --json number,headRefName,headRefOid --jq ".[0] // empty")"
+            [ -z "$row" ] && break
+            num="$(printf "%s" "$row" | jq -r .number)"
+            sha="$(printf "%s" "$row" | jq -r .headRefOid)"
+            head="$(printf "%s" "$row" | jq -r .headRefName)"
+            gh api -X POST "repos/$REPO/check-runs" \
+              -f name=probe-check -f head_sha="$sha" \
+              -f status=completed -f conclusion=success \
+              -f output[title]="reported by the stack bottom" \
+              -f output[summary]="posted from the main-based layer" > /dev/null
+            echo "posted probe-check for #$num ($head @ ${sha:0:8})"
+            hops=$((hops + 1))
+          done
+          echo "layers reported above the bottom: $hops"
