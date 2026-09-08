@@ -1,0 +1,19 @@
+# Mirrors the approval guard-s trigger shape exactly: pull_request_target,
+# scoped to main, context taken from the job name. The body is trivial on
+# purpose -- what is under test is which pull requests get a run at all.
+name: probe-check
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: probe-check
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "reporting probe-check for PR #${{ github.event.pull_request.number }} base=${{ github.event.pull_request.base.ref }}"
