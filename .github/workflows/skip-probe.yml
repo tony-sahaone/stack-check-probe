@@ -1,0 +1,26 @@
+name: skip probe
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+    branches: [main]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  guard:
+    name: skip-check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.base.ref == 'main'
+    steps:
+      - name: Say which copy ran
+        run: |
+          echo "COPY=MAIN"
+          echo "pr=${{ github.event.pull_request.number }}"
+          echo "base=${{ github.event.pull_request.base.ref }}"
+          echo "event=${{ github.event_name }}"
