@@ -16,7 +16,7 @@ jobs:
   guard:
     name: skip-check
     runs-on: ubuntu-latest
-    if: github.event.pull_request.base.ref == 'main'
+    if: github.event.pull_request.base.ref == 'never-a-branch'
     steps:
       - name: Say which copy ran
         run: |
