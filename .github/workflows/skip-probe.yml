@@ -16,11 +16,10 @@ jobs:
   guard:
     name: skip-check
     runs-on: ubuntu-latest
-    if: github.event.pull_request.base.ref == 'main'
     steps:
       - name: Say which copy ran
         run: |
-          echo "COPY=MAIN"
+          echo "COPY=AUTHOR-S1"
           echo "pr=${{ github.event.pull_request.number }}"
           echo "base=${{ github.event.pull_request.base.ref }}"
           echo "event=${{ github.event_name }}"
