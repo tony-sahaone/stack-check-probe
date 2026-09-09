@@ -17,9 +17,9 @@ jobs:
     name: skip-check
     runs-on: ubuntu-latest
     steps:
-      - name: Say which copy ran
+      - name: Marker from the S2 head
         run: |
-          echo "COPY=AUTHOR-S1"
+          echo "COPY=HEAD-S2"
           echo "pr=${{ github.event.pull_request.number }}"
           echo "base=${{ github.event.pull_request.base.ref }}"
           echo "event=${{ github.event_name }}"
